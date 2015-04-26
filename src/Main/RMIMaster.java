@@ -1,4 +1,4 @@
-package sharedResources;
+package Main;
 
 import java.net.InetAddress;
 import java.rmi.Naming;

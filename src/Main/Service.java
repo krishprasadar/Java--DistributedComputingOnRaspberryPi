@@ -1,4 +1,4 @@
-package sharedResources;
+package Main;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

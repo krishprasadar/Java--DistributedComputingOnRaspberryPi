@@ -1,5 +1,7 @@
 package sharedResources;
 
+//import components.Main;
+
 import components.Master;
 
 import java.net.InetAddress;
@@ -16,14 +18,14 @@ public class Slave implements Runnable {
     public Job jobAssigned;
     public int failCount=0;//keep track of failed or over delay count
     public SlaveStatus status;
-    public Service service;
+    public Main.Service service;
     public Master master;
     public List<Job> completedJobs;
     public long averageServiceTime, bestTime, worstTime;
 
     public long lastSeen;
 
-    public Slave(InetAddress ip, int port, Service service, Master master) {
+    public Slave(InetAddress ip, int port, Main.Service service, Master master) {
         this.ip = ip;
         this.port = port;
         this.service = service;
