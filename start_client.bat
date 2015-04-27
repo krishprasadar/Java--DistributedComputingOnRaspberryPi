@@ -1,0 +1,1 @@
+java -Djava.security.policy="./Policy" -jar ./dist/Client.jar %1
