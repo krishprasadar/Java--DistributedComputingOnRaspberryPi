@@ -20,7 +20,9 @@ public class Master
     IntervalNode root;
 
     public static void main(String[] args) {
-        Master main = new Master("");
+        //Master main = new Master("");
+        SlaveMonitor monitor = new SlaveMonitor();
+        monitor.start();
     }
 
     public Master(String sourceFile) {

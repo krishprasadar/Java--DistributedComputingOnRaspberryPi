@@ -9,7 +9,7 @@
     <!-- No RMIC: http://docs.oracle.com/javase/8/docs/api/java/rmi/server/UnicastRemoteObject.html -->
       
     <!-- Standard Directory Identifiers-->
-    <property name="java.src.dir" value="${basedir}/src/pirmi/" />
+    <property name="java.src.dir" value="${basedir}/src/" />
     <property name="java.dest.dir" value="${basedir}/build/" />
     <property name="java.dist.dir" value="${basedir}/dist/" />
 
@@ -30,7 +30,7 @@
     <target name="PiInfoClient" depends="compile">
         <jar destfile="${java.dist.dir}Client.jar" filesetmanifest="mergewithoutmain">
             <manifest>
-                <attribute name="Main-Class" value="pirmi.PiInfoClient" />
+                <attribute name="Main-Class" value="components.Master" />
                 <attribute name="Class-Path" value="." />
                 <attribute name="Built-Date" value="${TODAY}" />
                 <attribute name="Implementation-Title" value="Pi Info Client" />

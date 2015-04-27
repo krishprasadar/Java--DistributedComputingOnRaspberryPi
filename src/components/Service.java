@@ -17,37 +17,27 @@
  *
  * Also see: http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-package pirmi;
+package components;
 
-import java.io.Serializable;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
- * Wrapper class the key-value pairs found in system properties.  Must be
- * 'Serializable' so that it can be sent over a stream - i.e. RMI call.
- * 
- * I could have used the 'java.util.Properties' class instead to contain many
- * properties but this class illustrates how you can create your own classes
- * for use with RMI.
- * 
+ * This interface defines the methods you want your server to provide as a
+ * service to the client.
+ *
+ * The client will use it as it's RMI connection 'class' and the server will
+ * implement it.
+ *
  * @author G J Barnard
  */
-public class PiPairInfo implements Serializable
+public interface Service extends Remote
 {
-    private final String key, value;
+     public static final String SORT_SERVICE = "SortService";
+    public static final String AVG_SERVICE = "AverageService";
 
-    public PiPairInfo(String key, String value)
-    {
-        this.key = key;
-        this.value = value;
-    }
+    public static final int RMIRegistryPort = 2024;
+    public static final int ServicePort = 2025;
 
-    public String getKey()
-    {
-        return key;
-    }
-
-    public String getValue()
-    {
-        return value;
-    }
+    public int[] sort(int[] numbers) throws RemoteException;
 }
