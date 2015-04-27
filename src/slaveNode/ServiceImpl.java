@@ -1,16 +1,15 @@
 package slaveNode;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 
 /**
  * Created by raghavbabu on 4/25/15.
  */
-public class ServiceImpl implements Service {
+public class ServiceImpl extends UnicastRemoteObject implements Service {
 
-    private int port;
-
-    public ServiceImpl(int port) {
-        this.port = port;
+    public ServiceImpl(int port) throws RemoteException {
+        super(port);
     }
 
     @Override

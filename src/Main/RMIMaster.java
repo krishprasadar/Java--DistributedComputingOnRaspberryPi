@@ -3,6 +3,7 @@ package Main;
 import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.UnmarshalException;
+import java.util.Arrays;
 
 
 /**
@@ -19,7 +20,7 @@ public class RMIMaster {
         if (args.length == 1)
         {
             RMIMaster us = RMIMaster.getInstance();
-            us.getServiceFromSlave("127.0.0.1");
+            us.getServiceFromSlave("192.168.0.20");
         }
         else
         {
@@ -83,8 +84,9 @@ public class RMIMaster {
 
             client = InetAddress.getLocalHost().getHostName();
             System.out.println("Client is on " + client + " with Java version " + System.getProperty("java.version"));
-
-
+/*
+            int[] numbers = {1,6,7,3,2};
+            System.out.println(Arrays.asList(numbers).toString());*/
             connection = (Service) Naming.lookup("rmi://"
                     + connectionHost
                     + ":" + Service.RMIRegistryPort + "/" + Service.SORT_SERVICE);
