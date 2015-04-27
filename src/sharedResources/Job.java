@@ -1,5 +1,7 @@
 package sharedResources;
 
+//import components.Main;
+
 import components.Master;
 
 /**
@@ -8,9 +10,9 @@ import components.Master;
 public class Job {
     static int count = 0;
     public int start, end, jobId;
-    Master.IntervalNode sourceIntervalNode;
-    public SortServer sortServer;
-    public JobStatus status=JobStatus.Open;
+    public Master.IntervalNode sourceIntervalNode;
+    public Main.Service sortService;
+    public JobStatus status= JobStatus.Open;
     public long allottedTime, CompletedTime;
 
 
