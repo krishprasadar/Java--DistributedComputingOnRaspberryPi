@@ -1,37 +1,44 @@
 /*
- * Pi RMI.
- * © G J Barnard 2013 - Attribution-NonCommercial-ShareAlike 3.0 Unported - http://creativecommons.org/licenses/by-nc-sa/3.0/deed.en_GB.
+ * PiRMI.
+ * Copyright (C) 2015 Gareth J Barnard
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Also see: http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 package PiRMI;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.LinkedList;
 
 /**
  * This interface defines the methods you want your server to provide as a
  * service to the client.
- * 
- * The client will use it as it's RMI connection 'class' and the server
- * will implement it.
- * 
+ *
+ * The client will use it as it's RMI connection 'class' and the server will
+ * implement it.
+ *
  * @author G J Barnard
  */
 public interface PiInfo extends Remote
 {
+     public static final String SORT_SERVICE = "SortService";
+    public static final String AVG_SERVICE = "AverageService";
 
-    public static final String PIINFO_SERVICE = "PiInfoServer";
     public static final int RMIRegistryPort = 2024;
     public static final int ServicePort = 2025;
 
-    public String getHostName(String client) throws RemoteException;
-    
-    public String getJavaVersion(String client) throws RemoteException;
-    
-    public PiTriInfo getOSDetails(String client) throws RemoteException;
-    
-    public String getDataModel(String client) throws RemoteException;
-    
-    public String getEndian(String client) throws RemoteException;
-    
-    public PiTriInfo getUserDetails(String client) throws RemoteException;
+    public int[] sort(int[] numbers) throws RemoteException;
 }
