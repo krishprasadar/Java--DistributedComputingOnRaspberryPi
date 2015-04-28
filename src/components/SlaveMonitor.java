@@ -1,6 +1,7 @@
 package components;
 
 
+import sharedResources.Job;
 import sharedResources.Slave;
 import sharedResources.SlaveStatus;
 
@@ -13,17 +14,24 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.AccessControlException;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * Created by Krishna on 4/22/2015.
  */
-public class SlaveMonitor extends Thread {
+public class SlaveMonitor implements Runnable {
     BlockingQueue<Slave> slavePriorityQueue;
 
     private Service connection = null;
     private String client;
+    private Map<InetAddress,Service> slaveServiceStubMap;
+
+    public SlaveMonitor(Map<InetAddress,Service> slaveServiceStubMap){
+      this.slaveServiceStubMap = slaveServiceStubMap;
+    }
 
     public SlaveMonitor() {
         slavePriorityQueue = new PriorityBlockingQueue<Slave>(5, new Comparator<Slave>() {
@@ -37,45 +45,85 @@ public class SlaveMonitor extends Thread {
     }
 
     private void searchForSlaves() {
-        /**Network Discovery to be updated/
-         *
-         /*  *//*
-        int timeout = 10;
-        for (int i = 1; i <= 255; i++) {
-            String host = "192.168.0" + "." + i;
-            if (isReachableByTcp(host, 22, timeout)) {
-                System.out.println(host + " is reachable");
-            }
-        }*/
+
+//
+//        int timeout = 10;
+//        for (int i = 1; i <= 255; i++) {
+//            String host = "192.168.0" + "." + i;
+//            if (isReachableByTcp(host, 22, timeout)) {
+//                System.out.println(host + " is reachable");
+//                try {
+//                    InetAddress addr = InetAddress.getByName(host);
+//                    Slave slave = new Slave(addr);
+//                    slave.setIp(addr);
+//                } catch (UnknownHostException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//         }
+
+        InetAddress addr = null;
         try {
+            addr = InetAddress.getByName("127.0.0.1");
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        Slave slave = new Slave(addr);
+        //slave.setIp(addr);
+        //connectToSlaveIfItsReachable(slave);
 
-            InetAddress addr = InetAddress.getByName("127.0.0.1");
-            Slave slave = new Slave(addr);
+        try {
             connectToServer(slave);
-            int[] numbers = {1,6,7,3,2};
-            numbers = slave.service.sort(numbers);
-            for(int i= 0; i < numbers.length; i++)
-            {
-                System.out.println(numbers[i]);
-            }
-            System.out.println("Connection Successful!");
 
-        } catch (UnknownHostException | NotBoundException | MalformedURLException | RemoteException | ClassNotFoundException | AccessControlException ex) {
+            int[] numbers1 = {1,64,76,32,225};
+            Job job1 = new Job();
+            job1.setJobId(1);
+            job1.setNumbers(numbers1);
+
+//            numbers1 = slave.service.sort(numbers1);
+//            for (int i = 0; i < numbers1.length; i++) {
+//                   System.out.println(numbers1[i]);
+//                }
+
+            System.out.println(job1.getNumbers().length);
+            slave.service.push(job1);
+
+            int[] numbers2 = {1,64,76,32,225};
+            Job job2 = new Job();
+            job1.setJobId(1);
+            job2.setNumbers(numbers2);
+
+            slave.service.push(job2);
+
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            List<Job> jobList = slave.service.pull();
+
+            for(Job job : jobList) {
+                int[] numbers = job.getNumbers();
+
+                for (int i = 0; i < numbers.length; i++) {
+                    System.out.println(numbers1[i]);
+                }
+            }
+
+        } catch (UnknownHostException | NotBoundException | MalformedURLException | RemoteException
+                | ClassNotFoundException | AccessControlException ex) {
             ex.printStackTrace(System.err);
         }
 
+
     }
 
-    @Override
-    public void run() {
+    public void connectToSlaveIfItsReachable(Slave slave){
 
-        searchForSlaves();
+
+
     }
-
-   /* public static void main(String[] args) throws IOException {
-        SlaveMonitor slave = new SlaveMonitor();
-        slave.run();
-    }*/
 
     public static boolean isReachableByTcp(String host, int port, int timeout) {
         try {
@@ -89,7 +137,10 @@ public class SlaveMonitor extends Thread {
         }
     }
 
-    private boolean connectToServer(Slave slave) throws UnknownHostException, NotBoundException, MalformedURLException, RemoteException, UnmarshalException, ClassNotFoundException, java.rmi.ConnectException, AccessControlException {
+    private Map<InetAddress,Service> connectToServer(Slave slave) throws UnknownHostException, NotBoundException,
+            MalformedURLException, RemoteException, UnmarshalException, ClassNotFoundException,
+            java.rmi.ConnectException, AccessControlException {
+
         try {
             // Create and install a security manager.
             if (System.getSecurityManager() == null) {
@@ -97,25 +148,34 @@ public class SlaveMonitor extends Thread {
                 System.setSecurityManager(new SecurityManager());
             }
 
-            // Info
-            System.out.println("Client is on " + InetAddress.getLocalHost().getHostName() + " with Java version " + System.getProperty("java.version"));
-            System.out.println(slave.port);
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1",slave.port);
 
-            /*
-             * This does the actual connection returning a reference to the
-             * server service if it suceeds.
-             */
+            System.out.println("Client is on " + InetAddress.getLocalHost().getHostName()
+                    + " with Java version " + System.getProperty("java.version"));
+
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", slave.port);
+
+
             slave.service = (Service) registry.lookup(Service.SORT_SERVICE);
+            System.out.println("PiInfoClient:connectToServer - Connected to " + slave.ip.toString()
+                    + ":" + Service.RMIRegistryPort + "/" + Service.SORT_SERVICE);
 
-            System.out.println("PiInfoClient:connectToServer - Connected to " + slave.ip.toString() + ":" + Service.RMIRegistryPort + "/" + Service.SORT_SERVICE);
+            slaveServiceStubMap.put(slave.ip, slave.service);
 
-            return true;
-        } catch (UnmarshalException ue) {
-            System.err.println("PiInfoClient:connectToServer() - UnmarshalException - Check that the server can access it's configuration / policy files");
+            System.out.println("Slave and service Map created for " + slave.ip);
+            return slaveServiceStubMap;
+        }
+
+        catch (UnmarshalException ue) {
+            System.err.println("PiInfoClient:connectToServer() - UnmarshalException - " +
+                    "Check that the server can access it's configuration / policy files");
             ue.printStackTrace(System.err);
         }
-        return false;
+        return null;
+    }
+
+    @Override
+    public void run() {
+        searchForSlaves();
     }
 
 }

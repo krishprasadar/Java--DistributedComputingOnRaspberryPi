@@ -1,25 +1,62 @@
 package sharedResources;
 
-//import components.Main;
-
-import components.Master;
-
-/**
- * Created by Krishna on 4/22/2015.
- */
-public class Job {
-    static int count = 0;
-    public int start, end, jobId;
-    public Master.IntervalNode sourceIntervalNode;
-    //public Main.Service sortService;
-    public JobStatus status= JobStatus.Open;
-    public long allottedTime, CompletedTime;
+import java.io.Serializable;
 
 
-    public Job(int start, int end, Master.IntervalNode intervalNode) {
-        this.start = start;
-        this.end = end;
-        this.sourceIntervalNode = intervalNode;
-        jobId = Job.count++;
+public class Job implements Serializable {
+
+    private int start, end, jobId;
+    private int numbers[];
+    private JobStatus status;
+
+    public Job(){
+
     }
+
+    public int getEnd() {
+        return end;
+    }
+
+    public void setEnd(int end) {
+        this.end = end;
+    }
+
+    public int getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(int jobId) {
+        this.jobId = jobId;
+    }
+
+    public int[] getNumbers() {
+        return numbers;
+    }
+
+    public void setNumbers(int[] numbers) {
+        this.numbers = numbers;
+    }
+
+    public int getStart() {
+        return start;
+    }
+
+    public void setStart(int start) {
+        this.start = start;
+    }
+
+    public JobStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(JobStatus status) {
+        this.status = status;
+    }
+
+
+//    public Job(int start, int end ) {
+//        this.start = start;
+//        this.end = end;
+//        jobId = Job.count++;
+//    }
 }

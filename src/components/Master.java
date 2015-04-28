@@ -2,9 +2,11 @@ package components;
 
 import sharedResources.Job;
 import sharedResources.JobStatus;
+import sharedResources.Slave;
 
 import java.io.File;
-import java.util.Comparator;
+import java.net.InetAddress;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
@@ -19,10 +21,17 @@ public class Master
     BlockingQueue<Job> jobPriorityQueue;
     IntervalNode root;
 
+
+
     public static void main(String[] args) {
-        //Master main = new Master("");
-        SlaveMonitor monitor = new SlaveMonitor();
-        monitor.start();
+
+        Map<InetAddress,Service> slaveServiceStubMap = new HashMap<InetAddress,Service>();
+
+        SlaveMonitor monitor = new SlaveMonitor(slaveServiceStubMap);
+        Thread slaveMonitorThread = new Thread(monitor);
+        slaveMonitorThread.start();
+
+
     }
 
     public Master(String sourceFile) {
@@ -31,15 +40,15 @@ public class Master
         root = new IntervalNode(1, totalNumbers);
     }
 
-    public synchronized int[] fetchDataForJob(Job j)
-    {
-        int[] arr = new int[j.end - j.start];
-        /**
-         *
-         */
-
-        return arr;
-    }
+//    public synchronized int[] fetchDataForJob(Job j)
+//    {
+//        int[] arr = new int[j.end - j.start];
+//        /**
+//         *
+//         */
+//
+//        return arr;
+//    }
 
     public synchronized boolean updateJobData(Job j, int[] sortedData)
     {
@@ -49,18 +58,18 @@ public class Master
         return false;
     }
 
-    private void buildIntervalTree()
-    {
-
-        jobPriorityQueue = new PriorityBlockingQueue<Job>(10, new Comparator<Job>() {
-            @Override
-            public int compare(Job j1, Job j2) {
-                if(j1.status.getStatusCode() == j2.status.getStatusCode() && j1.status.equals(JobStatus.InProgress))
-                    return Long.compare(j1.allottedTime, j2.allottedTime);
-                return Integer.compare(j1.status.getStatusCode(), j2.status.getStatusCode());
-            }
-        });
-    }
+//    private void buildIntervalTree()
+//    {
+//
+//        jobPriorityQueue = new PriorityBlockingQueue<Job>(10, new Comparator<Job>() {
+//            @Override
+//            public int compare(Job j1, Job j2) {
+//                if(j1.status.getStatusCode() == j2.status.getStatusCode() && j1.status.equals(JobStatus.InProgress))
+//                    return Long.compare(j1.allottedTime, j2.allottedTime);
+//                return Integer.compare(j1.status.getStatusCode(), j2.status.getStatusCode());
+//            }
+//        });
+//    }
 
     public class IntervalNode
     {
@@ -87,8 +96,8 @@ public class Master
 
         private void generateJob()
         {
-            Job job = new Job(start, end, this);
-            jobPriorityQueue.add(job);
+//            Job job = new Job(start, end, this);
+//            jobPriorityQueue.add(job);
         }
 
 
