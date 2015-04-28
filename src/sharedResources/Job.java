@@ -1,13 +1,16 @@
 package sharedResources;
 
 import java.io.Serializable;
+import java.rmi.Remote;
 
 
-public class Job implements Serializable {
+public class Job implements Serializable,Remote {
 
-    private int start, end, jobId;
-    private int numbers[];
-    private JobStatus status;
+     int start, end, jobId;
+     int numbers[];
+     JobStatus status;
+
+    private static final long serialVersionUID = -464196277362659008L;
 
     public Job(){
 
@@ -53,10 +56,4 @@ public class Job implements Serializable {
         this.status = status;
     }
 
-
-//    public Job(int start, int end ) {
-//        this.start = start;
-//        this.end = end;
-//        jobId = Job.count++;
-//    }
 }

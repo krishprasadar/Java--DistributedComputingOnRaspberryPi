@@ -20,6 +20,7 @@
 package components;
 
 import sharedResources.Job;
+import sharedResources.JobStatus;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -31,8 +32,6 @@ import java.util.List;
  *
  * The client will use it as it's RMI connection 'class' and the server will
  * implement it.
- *
- * @author G J Barnard
  */
 public interface Service extends Remote
 {
@@ -46,4 +45,5 @@ public interface Service extends Remote
 
     public void push(Job job) throws RemoteException;
     public List<Job> pull() throws RemoteException;
+    public JobStatus getJobStatus(int jobId) throws RemoteException;
 }

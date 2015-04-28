@@ -2,6 +2,7 @@ package components;
 
 
 import sharedResources.Job;
+import sharedResources.JobStatus;
 import sharedResources.Slave;
 import sharedResources.SlaveStatus;
 
@@ -13,6 +14,7 @@ import java.rmi.UnmarshalException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.AccessControlException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -25,9 +27,8 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class SlaveMonitor implements Runnable {
     BlockingQueue<Slave> slavePriorityQueue;
 
-    private Service connection = null;
-    private String client;
     private Map<InetAddress,Service> slaveServiceStubMap;
+    private Map<Integer,JobStatus> jobStatusMap;
 
     public SlaveMonitor(Map<InetAddress,Service> slaveServiceStubMap){
       this.slaveServiceStubMap = slaveServiceStubMap;
@@ -75,39 +76,33 @@ public class SlaveMonitor implements Runnable {
         try {
             connectToServer(slave);
 
-            int[] numbers1 = {1,64,76,32,225};
+            int[] numbers1 = {10,640,76,32,225};
             Job job1 = new Job();
             job1.setJobId(1);
             job1.setNumbers(numbers1);
 
-//            numbers1 = slave.service.sort(numbers1);
-//            for (int i = 0; i < numbers1.length; i++) {
-//                   System.out.println(numbers1[i]);
-//                }
-
-            System.out.println(job1.getNumbers().length);
             slave.service.push(job1);
 
-            int[] numbers2 = {1,64,76,32,225};
+            int[] numbers2 = {1,23,45,100,200};
             Job job2 = new Job();
-            job1.setJobId(1);
+            job1.setJobId(2);
             job2.setNumbers(numbers2);
 
             slave.service.push(job2);
 
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            while(slave.service.getJobStatus(job1.getJobId()) == JobStatus.Completed &&
+                slave.service.getJobStatus(job2.getJobId()) == JobStatus.Completed ){
+                continue;
 
+            }
             List<Job> jobList = slave.service.pull();
 
             for(Job job : jobList) {
+
                 int[] numbers = job.getNumbers();
 
                 for (int i = 0; i < numbers.length; i++) {
-                    System.out.println(numbers1[i]);
+                    System.out.println(numbers[i]);
                 }
             }
 
