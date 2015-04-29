@@ -2,7 +2,6 @@ package components;
 
 
 import sharedResources.Slave;
-import sharedResources.SlaveStatus;
 
 import java.io.IOException;
 import java.net.*;
@@ -12,29 +11,29 @@ import java.rmi.UnmarshalException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.AccessControlException;
-import java.util.Comparator;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * Created by Krishna on 4/22/2015.
  */
 public class SlaveMonitor extends Thread {
-    BlockingQueue<Slave> slavePriorityQueue;
 
     private Service connection = null;
     private String client;
 
     public SlaveMonitor() {
-        slavePriorityQueue = new PriorityBlockingQueue<Slave>(5, new Comparator<Slave>() {
-            @Override
-            public int compare(Slave s1, Slave s2) {
-                if (s1.status.getStatusCode() == s2.status.getStatusCode() && s1.status.equals(SlaveStatus.Open))
-                    return Long.compare(s1.averageServiceTime, s2.averageServiceTime);
-                return Integer.compare(s1.status.getStatusCode(), s2.status.getStatusCode());
-            }
-        });
+
     }
+
+    public void initiate()
+    {
+        new SlaveMonitor().start();
+    }
+
+    public void start()
+    {
+
+    }
+
 
     private void searchForSlaves() {
         /**Network Discovery to be updated/
@@ -99,16 +98,16 @@ public class SlaveMonitor extends Thread {
 
             // Info
             System.out.println("Client is on " + InetAddress.getLocalHost().getHostName() + " with Java version " + System.getProperty("java.version"));
-            System.out.println(slave.port);
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1",slave.port);
+            System.out.println(Slave.RMIRegistryPort);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1",Slave.RMIRegistryPort);
 
             /*
              * This does the actual connection returning a reference to the
              * server service if it suceeds.
              */
-            slave.service = (Service) registry.lookup(Service.SORT_SERVICE);
+            slave.service = (Service) registry.lookup(Slave.SORT_SERVICE);
 
-            System.out.println("PiInfoClient:connectToServer - Connected to " + slave.ip.toString() + ":" + Service.RMIRegistryPort + "/" + Service.SORT_SERVICE);
+            System.out.println("PiInfoClient:connectToServer - Connected to " + slave.ip.toString() + ":" + Slave.RMIRegistryPort + "/" + Slave.SORT_SERVICE);
 
             return true;
         } catch (UnmarshalException ue) {

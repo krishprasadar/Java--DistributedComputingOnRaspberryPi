@@ -33,10 +33,10 @@ import java.rmi.RemoteException;
  */
 public interface Service extends Remote
 {
-     public static final String SORT_SERVICE = "SortService";
+
     public static final String AVG_SERVICE = "AverageService";
 
-    public static final int RMIRegistryPort = 2024;
+
     public static final int ServicePort = 2025;
 
     public int[] sort(int[] numbers) throws RemoteException;

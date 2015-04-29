@@ -4,9 +4,9 @@ import sharedResources.SharedResources;
 import sharedResources.Slave;
 
 /**
- * Created by Krishna on 4/22/2015.
+ * Created by Rathinakumar on 4/28/2015.
  */
-public class Allocator implements Runnable{
+public class Updator {
 
     public static int TASK_PRIORITY = 1;
 
@@ -14,7 +14,7 @@ public class Allocator implements Runnable{
     {
         while( !Master.done)
         {
-            if(! SharedResources.job_OpenQueue.isEmpty())
+            if(! SharedResources.job_OpenQueue.isEmpty() || ! SharedResources.job_CompletedQueue.isEmpty())
             {
                 try {
                     Thread.sleep(2000);
@@ -24,11 +24,10 @@ public class Allocator implements Runnable{
             }
             else
             {
-                Slave suitableSlave = SharedResources.slave_PushQueue.peek();
+                Slave suitableSlave = SharedResources.slave_PullQueue.peek();
 
-                if(suitableSlave.isReadyToPush())
+                if(suitableSlave.isReadyToPull())
                 {
-                    SharedResources.slave_PushQueue.remove(suitableSlave);
                     suitableSlave.prepareToPush(SharedResources.job_OpenQueue.poll());
                     SharedResources.executor.execute(suitableSlave);
                 }
@@ -36,4 +35,5 @@ public class Allocator implements Runnable{
 
         }
     }
+
 }

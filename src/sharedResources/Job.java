@@ -9,17 +9,68 @@ import components.Master;
  */
 public class Job {
     static int count = 0;
-    public int start, end, jobId;
-    public Master.IntervalNode sourceIntervalNode;
+    public int start, end;
+    public IntervalNode sourceIntervalNode;
     //public Main.Service sortService;
-    public JobStatus status= JobStatus.Open;
+    public JobStatus status = JobStatus.Open;
+    public Slave completedBy;
     public long allottedTime, CompletedTime;
 
-
-    public Job(int start, int end, Master.IntervalNode intervalNode) {
+    public Job(int start, int end, IntervalNode intervalNode) {
         this.start = start;
         this.end = end;
         this.sourceIntervalNode = intervalNode;
-        jobId = Job.count++;
     }
+
+
+
+    public void failed()
+    {
+        setStatus(JobStatus.Failed);
+    }
+
+    public void assigned()
+    {
+        allottedTime = System.currentTimeMillis();
+        setStatus(JobStatus.InProgress);
+    }
+
+    public void setStatus(JobStatus status)
+    {
+        if( ! this.status.equals(status))
+        {
+            this.status = status;
+            updateQueues();
+        }
+    }
+
+    private void updateQueues()
+    {
+        switch (status)
+        {
+            case Updated:
+            {
+                SharedResources.job_CompletedQueue.remove(this);
+                SharedResources.job_OpenQueue.remove(this);
+                /**
+                 * update the IntervalTree
+                 */
+                break;
+            }
+            case Completed:
+            {
+                SharedResources.job_CompletedQueue.add(this);
+
+                SharedResources.job_OpenQueue.remove(this);
+                SharedResources.job_OpenQueue.add(this);
+            }
+            default:
+            {
+                SharedResources.job_CompletedQueue.remove(this);
+                SharedResources.job_OpenQueue.remove(this);
+                SharedResources.job_OpenQueue.add(this);
+            }
+        }
+    }
+
 }
