@@ -20,6 +20,7 @@
 package components;
 
 import sharedResources.Job;
+import sharedResources.JobInterface;
 import sharedResources.JobStatus;
 
 import java.rmi.Remote;
@@ -43,7 +44,7 @@ public interface Service extends Remote
 
     public int[] sort(int[] numbers) throws RemoteException;
 
-    public void push(Job job) throws RemoteException;
-    public List<Job> pull() throws RemoteException;
+    public void push(JobInterface jobIntf) throws RemoteException;
+    public List<JobInterface> pull() throws RemoteException;
     public JobStatus getJobStatus(int jobId) throws RemoteException;
 }

@@ -1,10 +1,7 @@
 package components;
 
 
-import sharedResources.Job;
-import sharedResources.JobStatus;
-import sharedResources.Slave;
-import sharedResources.SlaveStatus;
+import sharedResources.*;
 
 import java.io.IOException;
 import java.net.*;
@@ -14,10 +11,7 @@ import java.rmi.UnmarshalException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.AccessControlException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
@@ -28,7 +22,7 @@ public class SlaveMonitor implements Runnable {
     BlockingQueue<Slave> slavePriorityQueue;
 
     private Map<InetAddress,Service> slaveServiceStubMap;
-    private Map<Integer,JobStatus> jobStatusMap;
+    private Map<Integer,JobStatus> jobStatusMap = new HashMap<>();
 
     public SlaveMonitor(Map<InetAddress,Service> slaveServiceStubMap){
       this.slaveServiceStubMap = slaveServiceStubMap;
@@ -38,7 +32,7 @@ public class SlaveMonitor implements Runnable {
         slavePriorityQueue = new PriorityBlockingQueue<Slave>(5, new Comparator<Slave>() {
             @Override
             public int compare(Slave s1, Slave s2) {
-                if (s1.status.getStatusCode() == s2.status.getStatusCode() && s1.status.equals(SlaveStatus.Open))
+                if (s1.status.getStatusCode() == s2.status.getStatusCode() && s1.status.equals(SlaveStatus.Active))
                     return Long.compare(s1.averageServiceTime, s2.averageServiceTime);
                 return Integer.compare(s1.status.getStatusCode(), s2.status.getStatusCode());
             }
@@ -77,27 +71,27 @@ public class SlaveMonitor implements Runnable {
             connectToServer(slave);
 
             int[] numbers1 = {10,640,76,32,225};
-            Job job1 = new Job();
+            JobInterface job1 = new Job();
             job1.setJobId(1);
             job1.setNumbers(numbers1);
 
             slave.service.push(job1);
 
             int[] numbers2 = {1,23,45,100,200};
-            Job job2 = new Job();
+            JobInterface job2 = new Job();
             job1.setJobId(2);
             job2.setNumbers(numbers2);
 
             slave.service.push(job2);
 
-            while(slave.service.getJobStatus(job1.getJobId()) == JobStatus.Completed &&
-                slave.service.getJobStatus(job2.getJobId()) == JobStatus.Completed ){
+            while(!(slave.service.getJobStatus(job1.getJobId()) == JobStatus.Completed) &&
+                !(slave.service.getJobStatus(job2.getJobId()) == JobStatus.Completed) ){
                 continue;
 
             }
-            List<Job> jobList = slave.service.pull();
+            List<JobInterface> jobList = slave.service.pull();
 
-            for(Job job : jobList) {
+            for(JobInterface job : jobList) {
 
                 int[] numbers = job.getNumbers();
 
