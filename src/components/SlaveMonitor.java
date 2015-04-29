@@ -64,11 +64,12 @@ public class SlaveMonitor implements Runnable {
             e.printStackTrace();
         }
         Slave slave = new Slave(addr);
-        //slave.setIp(addr);
+        slave.setIp(addr);
         //connectToSlaveIfItsReachable(slave);
 
         try {
-            connectToServer(slave);
+            Service service = connectToServer(slave);
+            slave.setService(service);
 
             int[] numbers1 = {10,640,76,32,225};
             JobInterface job1 = new Job();
@@ -126,7 +127,7 @@ public class SlaveMonitor implements Runnable {
         }
     }
 
-    private Map<InetAddress,Service> connectToServer(Slave slave) throws UnknownHostException, NotBoundException,
+    private Service connectToServer(Slave slave) throws UnknownHostException, NotBoundException,
             MalformedURLException, RemoteException, UnmarshalException, ClassNotFoundException,
             java.rmi.ConnectException, AccessControlException {
 
@@ -151,7 +152,7 @@ public class SlaveMonitor implements Runnable {
             slaveServiceStubMap.put(slave.ip, slave.service);
 
             System.out.println("Slave and service Map created for " + slave.ip);
-            return slaveServiceStubMap;
+            return slave.service;
         }
 
         catch (UnmarshalException ue) {

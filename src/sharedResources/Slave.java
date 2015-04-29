@@ -6,6 +6,8 @@ import components.Master;
 import components.Service;
 
 import java.net.InetAddress;
+import java.rmi.RemoteException;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -27,10 +29,10 @@ public class Slave implements Runnable {
     public int totalJobsPushed, totalJobsPulled;
 
     public Job toBePushed;
-    public List<Job> jobHistory;
-    public List<Job> inProcessJobs;
-    public List<Job> completedJobs;
-    public List<Job> updatedJobs;
+    public List<JobInterface> jobHistory =  new LinkedList<JobInterface>();
+    public List<JobInterface> inProcessJobs = new LinkedList<JobInterface>();
+    public List<JobInterface> completedJobs = new LinkedList<JobInterface>();
+    public List<JobInterface> updatedJobs =  new LinkedList<JobInterface>();
 
     public boolean pushMode = false, pullMode = false;
 
@@ -53,13 +55,17 @@ public class Slave implements Runnable {
         }
     }
 
-    public boolean pushJobData()
-    {
-        /**
-         * push data from file to server
-         * add toBePushed to the inProgressJob list
-         */
+    public boolean pushJobData()  {
 
+        JobInterface job = new Job();
+        job.setJobId(1);
+
+        try {
+            service.push(job);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return false;
+        }
         return true;
     }
 
@@ -69,22 +75,29 @@ public class Slave implements Runnable {
         return false;
     }
 
-    public boolean updateCompetedList()
+    public boolean updateCompletedList()
     {
-        /**
-         * get the newly completed jobs from server and update
-         */
-        return false;
+        try {
+            completedJobs = service.pull();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public boolean pullNextSortedJob()
     {
-        /**
-         * get the next completed Job from server and update it to the file
-         * remove it from completed list
-         * update Job status
-         */
-        return true;
+        if(!completedJobs.isEmpty()) {
+            int lastCompletedJobIndex = completedJobs.size() - 1;
+            JobInterface job = completedJobs.get(lastCompletedJobIndex);
+            completedJobs.remove(lastCompletedJobIndex);
+            return true;
+        }
+        else{
+            System.out.println("No Completed Jobs to pull");
+            return false;
+        }
     }
 
     public void slaveNotResponsive()
@@ -145,11 +158,11 @@ public class Slave implements Runnable {
         this.bestTime = bestTime;
     }
 
-    public List<Job> getCompletedJobs() {
+    public List<JobInterface> getCompletedJobs() {
         return completedJobs;
     }
 
-    public void setCompletedJobs(List<Job> completedJobs) {
+    public void setCompletedJobs(List<JobInterface> completedJobs) {
         this.completedJobs = completedJobs;
     }
 
