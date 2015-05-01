@@ -7,6 +7,7 @@ import components.Service;
 
 import java.net.InetAddress;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,12 +17,12 @@ public class Slave implements Runnable {
 
     public InetAddress ip;
     public static int jobCountThreshold = 5;
-    public Master master;
 
-    public SlaveStatus status;
-    public Service service;
+    public SlaveStatus status = null;
+    public Service service = null;
 
-    public Job toBePushed;
+    public Job toBePushed = null;
+
     public List<Job> jobHistory;
     public List<Job> inProcessJobs;
     public List<Job> completedJobs;
@@ -33,12 +34,9 @@ public class Slave implements Runnable {
     public long totalPushTime, totalPullTime;
     public int totalJobsPushed, totalJobsPulled;
 
-    public long averageServiceTime, bestTime, worstTime;
     public static final String SORT_SERVICE = "SortService";
     public static final int RMIRegistryPort = 2024;
     public long lastSeen;
-
-    public boolean pushMode = false, pullMode = false;
 
 
     public Slave(InetAddress ip) {
@@ -51,18 +49,26 @@ public class Slave implements Runnable {
         this.master = master;
     }*/
 
+    public void initialize(Service stub) {
+        this.service = stub;
+        jobHistory = new ArrayList<Job>();
+        inProcessJobs = new ArrayList<>();
+        completedJobs = new ArrayList<>();
+        updatedJobs = new ArrayList<>();
+
+        setStatus(SlaveStatus.OPEN);
+    }
 
     @Override
     public void run(){
-        if(pushMode)
+        if (status.equals(SlaveStatus.PUSH))
         {
             pushJobData();
-            pushMode = false;
-        }
-        else if(pullMode)
+            setStatus(SlaveStatus.OPEN);
+        } else if (status.equals(SlaveStatus.PUSH))
         {
             pullNextSortedJob();
-            pullMode = false;
+            setStatus(SlaveStatus.OPEN);
         }
     }
 
@@ -72,26 +78,26 @@ public class Slave implements Runnable {
          * push data from file to server
          * add toBePushed to the inProgressJob list
          */
-
+        toBePushed.assigned();
+        long pushStartTimer = System.currentTimeMillis();
+        //service.push( stream job data from file )
+        totalPushTime += (System.currentTimeMillis() - pushStartTimer);
+        totalJobsPushed++;
+        jobHistory.add(toBePushed);
+        inProcessJobs.add(toBePushed);
         return true;
-    }
-
-    public boolean isReadyToPush() {
-        if( !pullMode && status.equals(SlaveStatus.Active) && toBePushed == null && inProcessJobs.size()+completedJobs.size() < jobCountThreshold)
-            return true;
-        return false;
-    }
-
-    public boolean updateCompetedList()
-    {
-        /**
-         * get the newly completed jobs from server and update
-         */
-        return false;
     }
 
     public boolean pullNextSortedJob()
     {
+        Job pullJob = completedJobs.get(0);
+        long pullStartTimer = System.currentTimeMillis();
+        //service.pull( write the stream to file)
+        totalPullTime += (System.currentTimeMillis() - pullStartTimer);
+        totalJobsPulled++;
+        completedJobs.remove(pullJob);
+        updatedJobs.add(pullJob);
+
         /**
          * get the next completed Job from server and update it to the file
          * remove it from completed list
@@ -100,29 +106,49 @@ public class Slave implements Runnable {
         return true;
     }
 
-    public void slaveNotResponsive()
+    public boolean syncCompetedJobs()
     {
         /**
-         * update Jobs about this
-         * updates Slave status
+         * get the newly completed jobs from server and update
          */
+        List<Job> jobs = null;
+        //service.getCompletedList()
+        for (Job j : jobs) {
+            if (completedJobs.contains(j)) continue;
+            Job completedJob = inProcessJobs.remove(inProcessJobs.indexOf(j));
+            completedJobs.add(completedJob);
+            completedJob.completed(this);
+        }
+        return false;
     }
 
-    public void prepareToPush(Job bestJob) {
-        pushMode = true;
-        SharedResources.slave_PullQueue.remove(this);
+    public boolean isReadyToPush(Job nextJob) {
+        return (status.equals(SlaveStatus.FULL) && !jobHistory.contains(nextJob)) ? false : true;
+    }
+
+    public void prepareToPush(Job nextJob) {
+        toBePushed = nextJob;
+        setStatus(SlaveStatus.PUSH);
+    }
+
+
+    public boolean isReadyForPull() {
+        return (completedJobs.isEmpty()) ? false : true;
     }
 
     public void prepareToPull() {
-        pullMode = true;
-        SharedResources.slave_PullQueue.remove(this);
+        setStatus(SlaveStatus.PULL);
     }
 
-    public boolean isReadyToPull() {
-        if( ! pushMode && ! completedJobs.isEmpty() && status.equals(SlaveStatus.Active))
-            return true;
-        return false;
-    }
+
+
+
+
+
+
+
+
+
 
     public double getAveragePushTime()
     {
@@ -132,5 +158,57 @@ public class Slave implements Runnable {
     public double getAveragePullTime()
     {
         return totalPullTime/totalJobsPulled;
+    }
+
+
+    public void setStatus(SlaveStatus status) {
+        if (this.status == null || !this.status.equals(status)) {
+            this.status = status;
+            updateQ();
+        }
+
+    }
+
+    private void updateQ() {
+        switch (status) {
+            case OPEN: {
+                SharedResources.slave_PushQueue.add(this);
+            }
+            case PULL: {
+                SharedResources.slave_PushQueue.remove(this);
+                SharedResources.slave_PullQueue.remove(this);
+            }
+            case PUSH: {
+                SharedResources.slave_PushQueue.remove(this);
+                SharedResources.slave_PullQueue.remove(this);
+            }
+            case FULL: {
+                SharedResources.slave_PullQueue.add(this);
+            }
+            case FAILED: {
+                SharedResources.slave_PushQueue.remove(this);
+                SharedResources.slave_PullQueue.remove(this);
+            }
+            case INPROGRESS: {
+                /**
+                 * has to come from PUSH or PULL mode, where slaves have been removed from the Q's
+                 * so just add them back to re-position them
+                 */
+                SharedResources.slave_PushQueue.add(this);
+                SharedResources.slave_PullQueue.add(this);
+            }
+        }
+    }
+
+    public SlaveStatus getStatus() {
+        return status;
+    }
+
+    public void slaveNotResponsive() {
+        failCount++;
+        /**
+         * update Jobs about this
+         * updates Slave status
+         */
     }
 }

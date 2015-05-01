@@ -28,24 +28,6 @@ public class Master
         buildIntervalTree();
     }
 
-    public synchronized int[] fetchDataForJob(Job j)
-    {
-        int[] arr = new int[j.end - j.start];
-        /**
-         *
-         */
-
-        return arr;
-    }
-
-    public synchronized boolean updateJobData(Job j, int[] sortedData)
-    {
-        /**
-         * Update the input file with the sorted data and job start and end index
-         */
-        return false;
-    }
-
     private void buildIntervalTree()
     {
         root = new IntervalNode(1, totalNumbers, null);

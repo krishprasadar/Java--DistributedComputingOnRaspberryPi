@@ -1,5 +1,6 @@
 package components;
 
+import sharedResources.Job;
 import sharedResources.SharedResources;
 import sharedResources.Slave;
 
@@ -14,7 +15,7 @@ public class Allocator implements Runnable{
     {
         while( !Master.done)
         {
-            if(! SharedResources.job_OpenQueue.isEmpty())
+            if (SharedResources.job_OpenQueue.isEmpty() || SharedResources.slave_PushQueue.isEmpty())
             {
                 try {
                     Thread.sleep(2000);
@@ -24,13 +25,12 @@ public class Allocator implements Runnable{
             }
             else
             {
-                Slave suitableSlave = SharedResources.slave_PushQueue.peek();
-
-                if(suitableSlave.isReadyToPush())
+                Slave slave = SharedResources.slave_PushQueue.peek();
+                Job nextJob = SharedResources.job_OpenQueue.peek();
+                if (slave.isReadyToPush(nextJob))
                 {
-                    SharedResources.slave_PushQueue.remove(suitableSlave);
-                    suitableSlave.prepareToPush(SharedResources.job_OpenQueue.poll());
-                    SharedResources.executor.execute(suitableSlave);
+                    slave.prepareToPush(nextJob);
+                    SharedResources.executor.execute(slave);
                 }
             }
 

@@ -105,7 +105,7 @@ public class SlaveMonitor extends Thread {
              * This does the actual connection returning a reference to the
              * server service if it suceeds.
              */
-            slave.service = (Service) registry.lookup(Slave.SORT_SERVICE);
+            slave.initialize((Service) registry.lookup(Slave.SORT_SERVICE));
 
             System.out.println("PiInfoClient:connectToServer - Connected to " + slave.ip.toString() + ":" + Slave.RMIRegistryPort + "/" + Slave.SORT_SERVICE);
 

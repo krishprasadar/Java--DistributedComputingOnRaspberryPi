@@ -14,7 +14,7 @@ public class Updator {
     {
         while( !Master.done)
         {
-            if(! SharedResources.job_OpenQueue.isEmpty() || ! SharedResources.job_CompletedQueue.isEmpty())
+            if (SharedResources.slave_PullQueue.isEmpty())
             {
                 try {
                     Thread.sleep(2000);
@@ -24,12 +24,12 @@ public class Updator {
             }
             else
             {
-                Slave suitableSlave = SharedResources.slave_PullQueue.peek();
+                Slave slave = SharedResources.slave_PullQueue.peek();
 
-                if(suitableSlave.isReadyToPull())
+                if (slave.isReadyForPull())
                 {
-                    suitableSlave.prepareToPush(SharedResources.job_OpenQueue.poll());
-                    SharedResources.executor.execute(suitableSlave);
+                    slave.prepareToPull();
+                    SharedResources.executor.execute(slave);
                 }
             }
 

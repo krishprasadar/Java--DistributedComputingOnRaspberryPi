@@ -18,7 +18,7 @@ public class SharedResources {
     public static BlockingQueue<Job> job_OpenQueue = new PriorityBlockingQueue<Job>(10, new Comparator<Job>() {
         @Override
         public int compare(Job j1, Job j2) {
-            if(j2.status.equals(JobStatus.InProgress) && j1.status.equals(JobStatus.InProgress))
+            if (j2.status.equals(JobStatus.ASSIGNED) && j1.status.equals(JobStatus.ASSIGNED))
                 return Long.compare(j1.allottedTime, j2.allottedTime);
             return Integer.compare(j1.status.getStatusCode(), j2.status.getStatusCode());
         }
@@ -31,14 +31,6 @@ public class SharedResources {
             if (s2.status.equals(SlaveStatus.Active) && s1.status.equals(SlaveStatus.Active))
                 return Double.compare(s1.getAveragePushTime(), s2.getAveragePushTime());
             return Integer.compare(s1.status.getStatusCode(), s2.status.getStatusCode());
-        }
-    });
-
-
-    public static BlockingQueue<Job> job_CompletedQueue = new PriorityBlockingQueue<Job>(5, new Comparator<Job>() {
-        @Override
-        public int compare(Job o1, Job o2) {
-            return 0;
         }
     });
 
