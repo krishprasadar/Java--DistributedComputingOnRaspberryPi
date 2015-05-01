@@ -4,7 +4,8 @@ package sharedResources;
  * Created by Krishna on 4/22/2015.
  */
 public enum SlaveStatus {
-    Active(1), InActive(2);
+
+    OPEN(1), PUSH(5), PULL(5), INPROGRESS(2), FAILED(3), FULL(4);
 
     private final int statusCode;
 
