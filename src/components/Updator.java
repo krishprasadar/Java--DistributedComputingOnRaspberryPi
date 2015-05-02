@@ -3,10 +3,12 @@ package components;
 import sharedResources.SharedResources;
 import sharedResources.Slave;
 
+import java.rmi.RemoteException;
+
 /**
  * Created by Rathinakumar on 4/28/2015.
  */
-public class Updator {
+public class Updator implements Runnable{
 
     public static int TASK_PRIORITY = 1;
 
@@ -14,22 +16,29 @@ public class Updator {
     {
         while( !Master.done)
         {
-            if (SharedResources.slave_PullQueue.isEmpty())
+            synchronized (SharedResources.slave_PullQueue)
             {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            else
-            {
-                Slave slave = SharedResources.slave_PullQueue.peek();
-
-                if (slave.isReadyForPull())
+                if (SharedResources.slave_PullQueue.isEmpty())
                 {
-                    slave.prepareToPull();
-                    SharedResources.executor.execute(slave);
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                    Slave slave = SharedResources.slave_PullQueue.peek();
+
+                    try {
+                        if (slave != null && slave.isReadyForPull())
+                        {
+                            slave.prepareToPull();
+                            SharedResources.executor.execute(slave);
+                        }
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 

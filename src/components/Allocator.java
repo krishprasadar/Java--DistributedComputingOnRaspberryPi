@@ -25,12 +25,20 @@ public class Allocator implements Runnable{
             }
             else
             {
-                Slave slave = SharedResources.slave_PushQueue.peek();
-                Job nextJob = SharedResources.job_OpenQueue.peek();
-                if (slave.isReadyToPush(nextJob))
+                synchronized (SharedResources.slave_PushQueue)
                 {
-                    slave.prepareToPush(nextJob);
-                    SharedResources.executor.execute(slave);
+                    synchronized (SharedResources.job_OpenQueue)
+                    {
+
+                        Slave slave = SharedResources.slave_PushQueue.peek();
+                        Job nextJob = SharedResources.job_OpenQueue.peek();
+                        if (slave != null && slave.isReadyToPush(nextJob))
+                        {
+                            slave.prepareToPush(nextJob);
+                            //System.out.println("ALLOCATOR ------ JOB ID :" + nextJob.getID() + " Slave: " + slave);
+                            SharedResources.executor.execute(slave);
+                        }
+                    }
                 }
             }
 

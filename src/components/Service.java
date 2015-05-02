@@ -19,8 +19,13 @@
  */
 package components;
 
+import sharedResources.Job;
+import sharedResources.JobInterface;
+import sharedResources.JobStatus;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.List;
 
 /**
  * This interface defines the methods you want your server to provide as a
@@ -33,11 +38,13 @@ import java.rmi.RemoteException;
  */
 public interface Service extends Remote
 {
-
+    public static final String SORT_SERVICE = "SortService";
     public static final String AVG_SERVICE = "AverageService";
 
-
+    public static final int RMIRegistryPort = 2024;
     public static final int ServicePort = 2025;
 
-    public int[] sort(int[] numbers) throws RemoteException;
+    public void push(JobInterface jobIntf, List<Integer> list) throws RemoteException;
+    public List<Integer> pull(JobInterface job) throws RemoteException;
+    public List<JobInterface> getCompletedJobs() throws RemoteException;
 }

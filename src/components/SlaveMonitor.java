@@ -1,7 +1,7 @@
 package components;
 
 
-import sharedResources.Slave;
+import sharedResources.*;
 
 import java.io.IOException;
 import java.net.*;
@@ -11,28 +11,22 @@ import java.rmi.UnmarshalException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.AccessControlException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * Created by Krishna on 4/22/2015.
  */
-public class SlaveMonitor extends Thread {
+public class SlaveMonitor implements Runnable {
 
     private Service connection = null;
     private String client;
+    public List<InetAddress> listOfSlaves;
 
-    public SlaveMonitor() {
-
-    }
-
-    public void initiate()
-    {
-        new SlaveMonitor().start();
-    }
-
-    public void start()
-    {
-
-    }
 
 
     private void searchForSlaves() {
@@ -46,20 +40,25 @@ public class SlaveMonitor extends Thread {
                 System.out.println(host + " is reachable");
             }
         }*/
+        listOfSlaves = new ArrayList<>();
+
+
         try {
 
             InetAddress addr = InetAddress.getByName("127.0.0.1");
+            listOfSlaves.add(addr);
             Slave slave = new Slave(addr);
-            connectToServer(slave);
-            int[] numbers = {1,6,7,3,2};
-            numbers = slave.service.sort(numbers);
-            for(int i= 0; i < numbers.length; i++)
-            {
-                System.out.println(numbers[i]);
+            if (connectToServer(slave)) {
+                System.out.println("Connection Successful!");
+                slave.setStatus(SlaveStatus.OPEN);
             }
-            System.out.println("Connection Successful!");
+            else
+            {
+                slave.setStatus(SlaveStatus.FAILED);
+            }
 
-        } catch (UnknownHostException | NotBoundException | MalformedURLException | RemoteException | ClassNotFoundException | AccessControlException ex) {
+
+        } catch (Exception ex) {
             ex.printStackTrace(System.err);
         }
 
@@ -88,7 +87,7 @@ public class SlaveMonitor extends Thread {
         }
     }
 
-    private boolean connectToServer(Slave slave) throws UnknownHostException, NotBoundException, MalformedURLException, RemoteException, UnmarshalException, ClassNotFoundException, java.rmi.ConnectException, AccessControlException {
+    private boolean connectToServer(Slave slave)  {
         try {
             // Create and install a security manager.
             if (System.getSecurityManager() == null) {
@@ -105,12 +104,14 @@ public class SlaveMonitor extends Thread {
              * This does the actual connection returning a reference to the
              * server service if it suceeds.
              */
+
             slave.initialize((Service) registry.lookup(Slave.SORT_SERVICE));
+
 
             System.out.println("PiInfoClient:connectToServer - Connected to " + slave.ip.toString() + ":" + Slave.RMIRegistryPort + "/" + Slave.SORT_SERVICE);
 
             return true;
-        } catch (UnmarshalException ue) {
+        } catch (Exception ue) {
             System.err.println("PiInfoClient:connectToServer() - UnmarshalException - Check that the server can access it's configuration / policy files");
             ue.printStackTrace(System.err);
         }

@@ -11,7 +11,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  */
 public class SharedResources {
 
-    public static int MAX_PUSH_THREADS = 10;
+    public static int MAX_PUSH_THREADS = 5;
 
     public static ExecutorService executor = Executors.newFixedThreadPool(MAX_PUSH_THREADS);
 
@@ -28,7 +28,7 @@ public class SharedResources {
     public static BlockingQueue<Slave> slave_PushQueue = new PriorityBlockingQueue<Slave>(5, new Comparator<Slave>() {
         @Override
         public int compare(Slave s1, Slave s2) {
-            if (s2.status.equals(SlaveStatus.Active) && s1.status.equals(SlaveStatus.Active))
+            if (s2.status.equals(SlaveStatus.INPROGRESS) && s1.status.equals(SlaveStatus.INPROGRESS))
                 return Double.compare(s1.getAveragePushTime(), s2.getAveragePushTime());
             return Integer.compare(s1.status.getStatusCode(), s2.status.getStatusCode());
         }
@@ -38,11 +38,16 @@ public class SharedResources {
     public static BlockingQueue<Slave> slave_PullQueue = new PriorityBlockingQueue<Slave>(5, new Comparator<Slave>() {
         @Override
         public int compare(Slave s1, Slave s2) {
-            if (s2.status.equals(SlaveStatus.Active) && s1.status.equals(SlaveStatus.Active))
+            if (s2.status.equals(SlaveStatus.INPROGRESS) && s1.status.equals(SlaveStatus.INPROGRESS))
                 return Integer.compare(s2.completedJobs.size(), s1.completedJobs.size());
-            return Integer.compare(s1.status.getStatusCode(), s2.status.getStatusCode());
+            return Integer.compare(s2.status.getStatusCode(), s1.status.getStatusCode());
         }
     });
 
-
+    public static BlockingQueue<Slave> slave_InActive = new PriorityBlockingQueue<>(2, new Comparator<Slave>() {
+        @Override
+        public int compare(Slave o1, Slave o2) {
+            return Long.compare(o1.inactivatedTime, o2.inactivatedTime);
+        }
+    });
 }
