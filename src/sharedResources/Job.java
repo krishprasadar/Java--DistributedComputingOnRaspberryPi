@@ -38,6 +38,7 @@ public class Job implements JobInterface, Serializable{
 
     public void pushDataToFile(List<Integer> list) {
         Master.writeToFile(list, start, end);
+
     }
 
 
