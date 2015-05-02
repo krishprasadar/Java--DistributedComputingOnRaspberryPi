@@ -15,8 +15,8 @@ public class Master
 {
     File sourceFile;
     public static boolean done = false;
-    public static int jobSizeThreshold = 8;// 1000000
-    int totalNumbers = 1024;
+    public static int jobSizeThreshold = 1024;// 1000000
+    static  int totalNumbers = 1024000;
     IntervalNode root;
     public static List<Integer> mockFile = new ArrayList<>();
     public static List<Integer> mockOutputFile = new ArrayList<>();
@@ -25,7 +25,7 @@ public class Master
 
 
 
-        for(int i=0; i<1024; i++)
+        for(int i=0; i<totalNumbers; i++)
             mockFile.add(new Random().nextInt(1000000));
         mockOutputFile.addAll(mockFile);
         Master main = new Master();
@@ -57,12 +57,15 @@ public class Master
 
     public synchronized static void writeToFile(List<Integer> list, int st, int en)
     {
-
+        System.out.print("Updated list of: " + st + " ==> ");
         for(int i=st; i<en; i++)
         {
-            mockOutputFile.set(i, list.get(i-st));
-            System.out.println(list.get(i-st));
+            mockOutputFile.set(i, list.get(i - st));
+            System.out.print(list.get(i - st) + " ");
+            long start = System.currentTimeMillis();
+            long end = System.currentTimeMillis();
         }
+        System.out.println();
     }
 
     private void buildIntervalTree()

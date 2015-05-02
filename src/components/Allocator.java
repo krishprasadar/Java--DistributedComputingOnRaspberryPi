@@ -14,7 +14,13 @@ public class Allocator implements Runnable{
     public void run()
     {
         while( !Master.done)
+
         {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             if (SharedResources.job_OpenQueue.isEmpty() || SharedResources.slave_PushQueue.isEmpty())
             {
                 try {
@@ -32,7 +38,7 @@ public class Allocator implements Runnable{
 
                         Slave slave = SharedResources.slave_PushQueue.peek();
                         Job nextJob = SharedResources.job_OpenQueue.peek();
-                        if (slave != null && slave.isReadyToPush(nextJob))
+                        if (slave.isReadyToPush(nextJob))
                         {
                             slave.prepareToPush(nextJob);
                             //System.out.println("ALLOCATOR ------ JOB ID :" + nextJob.getID() + " Slave: " + slave);

@@ -11,7 +11,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  */
 public class SharedResources {
 
-    public static int MAX_PUSH_THREADS = 5;
+    public static int MAX_PUSH_THREADS = 500;
 
     public static ExecutorService executor = Executors.newFixedThreadPool(MAX_PUSH_THREADS);
 
@@ -38,7 +38,7 @@ public class SharedResources {
     public static BlockingQueue<Slave> slave_PullQueue = new PriorityBlockingQueue<Slave>(5, new Comparator<Slave>() {
         @Override
         public int compare(Slave s1, Slave s2) {
-            if (s2.status.equals(SlaveStatus.INPROGRESS) && s1.status.equals(SlaveStatus.INPROGRESS))
+            if (s1.status.equals(s2.status) && (s2.status.equals(SlaveStatus.INPROGRESS) || s2.status.equals(SlaveStatus.FULL)))
                 return Integer.compare(s2.completedJobs.size(), s1.completedJobs.size());
             return Integer.compare(s2.status.getStatusCode(), s1.status.getStatusCode());
         }

@@ -16,7 +16,7 @@ import java.util.List;
 public class Slave implements Runnable, Serializable {
 
     public InetAddress ip;
-    public static int jobCountThreshold = 5;
+    public static int jobCountThreshold = 1000;
 
     public SlaveStatus status = null;
     public Service service = null;
@@ -71,7 +71,6 @@ public class Slave implements Runnable, Serializable {
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-            setStatus(SlaveStatus.OPEN);
         } else if (status.equals(SlaveStatus.PULL))
         {
             try {
@@ -79,7 +78,6 @@ public class Slave implements Runnable, Serializable {
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-            setStatus(SlaveStatus.OPEN);
         }
 
 
@@ -100,12 +98,16 @@ public class Slave implements Runnable, Serializable {
             totalPushTime += (System.currentTimeMillis() - pushStartTimer);
             totalJobsPushed++;
             jobHistory.add(toBePushed);
+            if(inProcessJobs.contains(toBePushed))
+                System.out.println("Job" + toBePushed.getID() + "is present already");
             inProcessJobs.add(toBePushed);
-            setStatus(SlaveStatus.INPROGRESS);
-
+            if((inProcessJobs.size() + completedJobs.size())>=jobCountThreshold)
+                setStatus(SlaveStatus.FULL);
+            else
+                setStatus(SlaveStatus.INPROGRESS);
+            toBePushed = null;
         }
         else {
-            setStatus(SlaveStatus.FULL);
             return false;
         }
 
@@ -117,6 +119,7 @@ public class Slave implements Runnable, Serializable {
         if((inProcessJobs.size() + completedJobs.size()) > 0) {
             long pullStartTimer = System.currentTimeMillis();
             //service.pull( write the stream to file)
+            System.out.println("Pull Job " + pullJob.getID() + "; status: " + pullJob.status + " ; thread" + Thread.currentThread().getId());
             List<Integer> jobPulled = service.pull(pullJob);
             if(jobPulled != null) {
                 pullJob.pushDataToFile(jobPulled);
@@ -124,12 +127,17 @@ public class Slave implements Runnable, Serializable {
                 totalJobsPulled++;
                 completedJobs.remove(pullJob);
                 updatedJobs.add(pullJob);
-                setStatus(SlaveStatus.INPROGRESS);
-                syncCompetedJobs();
+
+                if((inProcessJobs.size()+completedJobs.size())<1)
+                    setStatus(SlaveStatus.OPEN);
+                else
+                    setStatus(SlaveStatus.INPROGRESS);
+                pullJob.completed(this);
+                //syncCompetedJobs();
+                pullJob = null;
             }
         }
         else {
-            setStatus(SlaveStatus.OPEN);
             return false;
         }
         /**
@@ -146,32 +154,31 @@ public class Slave implements Runnable, Serializable {
          */
 
         List<JobInterface> jobs = service.getCompletedJobs();
-        //System.out.println("SYNC: Thread" + Thread.currentThread().getId());
-        //System.out.println("In Progress Jobs Thread" + Thread.currentThread().getId());
-        /*for (Job jj : inProcessJobs) {
+        System.out.println("INPROGRESS : ==> ");
+        for (Job jj : inProcessJobs) {
             System.out.print(jj.getID() + " ");
         }
+        System.out.println("COMPLETED : ==> ");
         for (Job jj : completedJobs) {
             System.out.print(jj.getID() + " ");
-        }*/
-        //System.out.println();
+        }
+        System.out.println();
         for (JobInterface j : jobs) {
             //System.out.println("SYNC: job ID: "+j.getID()+"");
             if (completedJobs.contains(j))
                 continue;
             int index = inProcessJobs.indexOf((Job)j);
-            if(index > -1) {
-                Job completedJob = inProcessJobs.remove(index);
-                completedJobs.add(completedJob);
-                completedJob.completed(this);
-                setStatus(SlaveStatus.PULL);
-            }
+            Job completedJob = inProcessJobs.remove(index);
+            completedJobs.add(completedJob);
+            completedJob.completed(this);
+            setStatus(SlaveStatus.PULL);
         }
         return false;
     }
 
     public boolean isReadyToPush(Job nextJob) {
-        return (status.equals(SlaveStatus.FULL) && jobHistory.contains(nextJob)) ? false : true;
+        System.out.println(" READY CHECK for PUSH : status "+status+" for JOD "+ nextJob.getID() +" return = "+ status.equals(SlaveStatus.FULL) +" or "+ jobHistory.contains(nextJob));
+        return ( status.equals(SlaveStatus.FULL) || jobHistory.contains(nextJob) )? false : true;
     }
 
     public void prepareToPush(Job nextJob) {
@@ -184,6 +191,12 @@ public class Slave implements Runnable, Serializable {
 
     public boolean isReadyForPull() throws RemoteException {
         syncCompetedJobs();
+        System.out.print(" READY CHECK for PULL : status " + status + " completed jobs =  ");
+
+        for (Job j : completedJobs) {
+            System.out.print(j.getID()+" ");
+        }
+        System.out.println();
         return (completedJobs.isEmpty()) ? false : true;
     }
 
@@ -216,22 +229,29 @@ public class Slave implements Runnable, Serializable {
     private void updateQ() {
         switch (status) {
             case OPEN: {
+                SharedResources.slave_PushQueue.remove(this);
                 SharedResources.slave_PushQueue.add(this);
+                //SharedResources.slave_PullQueue.remove(this);
                 SharedResources.slave_InActive.remove(this);
                 break;
             }
             case PULL: {
                 SharedResources.slave_PushQueue.remove(this);
                 SharedResources.slave_PullQueue.remove(this);
+                System.out.println("Slave Status :"+ status+ " Pull Queue Size" + SharedResources.slave_PullQueue.size());
                 break;
             }
             case PUSH: {
                 SharedResources.slave_PushQueue.remove(this);
                 SharedResources.slave_PullQueue.remove(this);
+                System.out.println("Slave Status :"+ status+ " Pull Queue Size" + SharedResources.slave_PullQueue.size());
                 break;
             }
             case FULL: {
+                SharedResources.slave_PushQueue.remove(this);
+                SharedResources.slave_PullQueue.remove(this);
                 SharedResources.slave_PullQueue.add(this);
+                System.out.println("Slave Status :"+ status+ " Pull Queue Size" + SharedResources.slave_PullQueue.size());
                 break;
             }
             case FAILED: {
@@ -245,9 +265,16 @@ public class Slave implements Runnable, Serializable {
                  * has to come from PUSH or PULL mode, where slaves have been removed from the Q's
                  * so just add them back to re-position them
                  */
+                SharedResources.slave_PullQueue.remove(this);
+                SharedResources.slave_PushQueue.remove(this);
                 SharedResources.slave_PushQueue.add(this);
                 SharedResources.slave_PullQueue.add(this);
+                System.out.println("Slave Status :"+ status+ " Pull Queue Size" + SharedResources.slave_PullQueue.size());
                 break;
+            }
+            default:
+            {
+
             }
         }
     }
@@ -266,6 +293,6 @@ public class Slave implements Runnable, Serializable {
 
     public void slaveReport()
     {
-        System.out.println("slave --> "+this+" ; status : "+status+ "; completed:"+completedJobs.size()+" inprogress "+inProcessJobs.size());
+        System.out.println("slave --> " + this + " ; status : " + status + "; completed:" + completedJobs.size() + " inprogress " + inProcessJobs.size());
     }
 }

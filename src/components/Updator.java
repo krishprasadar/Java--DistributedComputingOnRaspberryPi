@@ -16,11 +16,17 @@ public class Updator implements Runnable{
     {
         while( !Master.done)
         {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             synchronized (SharedResources.slave_PullQueue)
             {
                 if (SharedResources.slave_PullQueue.isEmpty())
                 {
                     try {
+                        System.out.println("UPDATOR Q empty");
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -29,7 +35,7 @@ public class Updator implements Runnable{
                 else
                 {
                     Slave slave = SharedResources.slave_PullQueue.peek();
-
+                    System.out.println("UPDATOR : Slave Status from " + slave.status );
                     try {
                         if (slave != null && slave.isReadyForPull())
                         {
