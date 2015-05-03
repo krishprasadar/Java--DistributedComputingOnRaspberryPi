@@ -11,7 +11,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  */
 public class SharedResources {
 
-    public static int MAX_PUSH_THREADS = 500;
+    public static int MAX_PUSH_THREADS = 20;
 
     public static ExecutorService executor = Executors.newFixedThreadPool(MAX_PUSH_THREADS);
 
@@ -50,4 +50,10 @@ public class SharedResources {
             return Long.compare(o1.inactivatedTime, o2.inactivatedTime);
         }
     });
+
+
+    public static void initializeTask( Runnable task)
+    {
+        executor.execute(task);
+    }
 }

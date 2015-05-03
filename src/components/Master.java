@@ -4,9 +4,7 @@ import sharedResources.IntervalNode;
 import sharedResources.SharedResources;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created by Krishna on 4/22/2015.
@@ -16,18 +14,18 @@ public class Master
     File sourceFile;
     public static boolean done = false;
     public static int jobSizeThreshold = 1024;// 1000000
-    static  int totalNumbers = 1024000;
+    static  int totalNumbers = 102400;
     IntervalNode root;
-    public static List<Integer> mockFile = new ArrayList<>();
-    public static List<Integer> mockOutputFile = new ArrayList<>();
+    public static int[][] mockFile;
     public static void main(String[] args) {
         //Master main = new Master("");
 
 
+        mockFile = new int[2][totalNumbers];
+        for(int i=0; i<totalNumbers; i++) {
+            mockFile[0][i] = new Random().nextInt(1000000);
+        }
 
-        for(int i=0; i<totalNumbers; i++)
-            mockFile.add(new Random().nextInt(1000000));
-        mockOutputFile.addAll(mockFile);
         Master main = new Master();
 
         SharedResources.executor.execute(new SlaveMonitor());
@@ -51,19 +49,18 @@ public class Master
     {
         List<Integer> list = new ArrayList<>();
         for(int i=st; i<=en; i++)
-            list.add(Master.mockFile.get(i));
+            list.add(Master.mockFile[0][i]);
         return list;
     }
 
     public synchronized static void writeToFile(List<Integer> list, int st, int en)
     {
         System.out.print("Updated list of: " + st + " ==> ");
-        for(int i=st; i<en; i++)
+        for(int i=st; i<=en; i++)
         {
-            mockOutputFile.set(i, list.get(i - st));
+            mockFile[1][i] = list.get(i - st);
             System.out.print(list.get(i - st) + " ");
-            long start = System.currentTimeMillis();
-            long end = System.currentTimeMillis();
+
         }
         System.out.println();
     }
@@ -78,5 +75,33 @@ public class Master
          * read the number of lines in the sourceFile
          */
         return 1000000000;
+    }
+
+    private static boolean isSorted(int finalSorted)
+    {
+        int i;
+        for(i=1; i<mockFile[finalSorted].length; i++)
+        {
+            if(mockFile[finalSorted][i]<mockFile[finalSorted][i-1])
+            {
+                System.out.println("index "+(i-1)+" = "+mockFile[finalSorted][i-1]+" ; index "+i+" = "+mockFile[finalSorted][i] );
+                break;
+            }
+        }
+        return (i<Master.mockFile[finalSorted].length)? false:true;
+    }
+
+    public static void shutDown() {
+        /**
+         * shutdown all threads
+         */
+        SharedResources.executor.shutdown();
+        System.out.println("Master Shut Down");
+        int finalSorted = (IntervalNode.MAX_LEVEL+1)%2;
+
+        if(!isSorted(finalSorted))
+            System.out.println("==================SORT FAILED=================");
+        else
+            System.out.println("==================SORT SUCCESS!!!=================");
     }
 }

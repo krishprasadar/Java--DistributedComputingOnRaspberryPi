@@ -47,4 +47,5 @@ public interface Service extends Remote
     public void push(JobInterface jobIntf, List<Integer> list) throws RemoteException;
     public List<Integer> pull(JobInterface job) throws RemoteException;
     public List<JobInterface> getCompletedJobs() throws RemoteException;
+
 }

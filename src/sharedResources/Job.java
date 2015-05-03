@@ -32,13 +32,12 @@ public class Job implements JobInterface, Serializable{
 
 
     public List<Integer> getDataFromFile() {
-
         return Master.getBetween(start, end);
     }
 
     public void pushDataToFile(List<Integer> list) {
         Master.writeToFile(list, start, end);
-
+        setStatus(JobStatus.UPDATED);
     }
 
 
@@ -81,9 +80,7 @@ public class Job implements JobInterface, Serializable{
                 }
                 case UPDATED: {
                     SharedResources.job_OpenQueue.remove(this);
-                    /**
-                     * update the IntervalTree
-                     */
+                    sourceIntervalNode.setCompleted();
                     break;
                 }
                 case COMPLETED:
@@ -96,7 +93,7 @@ public class Job implements JobInterface, Serializable{
                     SharedResources.job_OpenQueue.remove(this);
                     break;
                 }
-                default:
+                case FAILED:
                 {
                     SharedResources.job_OpenQueue.remove(this);
                     SharedResources.job_OpenQueue.add(this);

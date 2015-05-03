@@ -30,14 +30,15 @@ public class SlaveMonitor implements Runnable {
 
 
     private void searchForSlaves() {
-        /**Network Discovery to be updated/
-         *
-         /*  *//*
-        int timeout = 10;
-        for (int i = 1; i <= 255; i++) {
-            String host = "192.168.0" + "." + i;
+        /*Network Discovery to be updated*/
+
+
+      /*  int timeout = 10;
+        for (int i = 100; i <= 200; i++) {
+            String host = "10.10.10" + "." + i;
             if (isReachableByTcp(host, 22, timeout)) {
                 System.out.println(host + " is reachable");
+
             }
         }*/
         listOfSlaves = new ArrayList<>();
@@ -45,16 +46,28 @@ public class SlaveMonitor implements Runnable {
 
         try {
 
-            InetAddress addr = InetAddress.getByName("127.0.0.1");
+            InetAddress addr = InetAddress.getByName("10.10.10.136");
             listOfSlaves.add(addr);
-            Slave slave = new Slave(addr);
-            if (connectToServer(slave)) {
+            Slave slave1 = new Slave(addr);
+            addr = InetAddress.getByName("10.10.10.133");
+            listOfSlaves.add(addr);
+            Slave slave2 = new Slave(addr);
+            if (connectToServer(slave1)) {
                 System.out.println("Connection Successful!");
-                slave.setStatus(SlaveStatus.OPEN);
+                slave1.setStatus(SlaveStatus.OPEN);
             }
             else
             {
-                slave.setStatus(SlaveStatus.FAILED);
+                slave1.setStatus(SlaveStatus.FAILED);
+            }
+
+            if (connectToServer(slave2)) {
+                System.out.println("Connection Successful!");
+                slave2.setStatus(SlaveStatus.OPEN);
+            }
+            else
+            {
+                slave2.setStatus(SlaveStatus.FAILED);
             }
 
 
@@ -98,7 +111,8 @@ public class SlaveMonitor implements Runnable {
             // Info
             System.out.println("Client is on " + InetAddress.getLocalHost().getHostName() + " with Java version " + System.getProperty("java.version"));
             System.out.println(Slave.RMIRegistryPort);
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1",Slave.RMIRegistryPort);
+            //Registry registry = LocateRegistry.getRegistry("127.0.0.1",Slave.RMIRegistryPort);
+            Registry registry = LocateRegistry.getRegistry(slave.ip.getHostAddress(),Slave.RMIRegistryPort);
 
             /*
              * This does the actual connection returning a reference to the

@@ -16,7 +16,7 @@ import java.util.List;
 public class Slave implements Runnable, Serializable {
 
     public InetAddress ip;
-    public static int jobCountThreshold = 1000;
+    public static int jobCountThreshold = 100;
 
     public SlaveStatus status = null;
     public Service service = null;
@@ -64,23 +64,19 @@ public class Slave implements Runnable, Serializable {
     @Override
     public void run(){
 
-        if (status.equals(SlaveStatus.PUSH))
-        {
-            try {
+        try{
+            if (status.equals(SlaveStatus.PUSH))
+            {
                 pushJobData();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        } else if (status.equals(SlaveStatus.PULL))
-        {
-            try {
+            } else if (status.equals(SlaveStatus.PULL))
+            {
                 pullNextSortedJob();
-            } catch (RemoteException e) {
-                e.printStackTrace();
             }
         }
-
-
+        catch (Exception e)
+        {
+            slaveNotResponsive();
+        }
     }
 
     public boolean pushJobData() throws RemoteException {
@@ -177,7 +173,7 @@ public class Slave implements Runnable, Serializable {
     }
 
     public boolean isReadyToPush(Job nextJob) {
-        System.out.println(" READY CHECK for PUSH : status "+status+" for JOD "+ nextJob.getID() +" return = "+ status.equals(SlaveStatus.FULL) +" or "+ jobHistory.contains(nextJob));
+        System.out.println(" READY CHECK for PUSH : status " + status + " for JOD " + nextJob.getID() + " return = " + status.equals(SlaveStatus.FULL) + " or " + jobHistory.contains(nextJob));
         return ( status.equals(SlaveStatus.FULL) || jobHistory.contains(nextJob) )? false : true;
     }
 
@@ -285,6 +281,15 @@ public class Slave implements Runnable, Serializable {
 
     public void slaveNotResponsive() {
         failCount++;
+        setStatus(SlaveStatus.FAILED);
+        for(Job j : inProcessJobs)
+        {
+            j.setStatus(JobStatus.FAILED);
+        }
+        for(Job j : completedJobs)
+        {
+            j.setStatus(JobStatus.FAILED);
+        }
         /**
          * update Jobs about this
          * updates Slave status
@@ -294,5 +299,10 @@ public class Slave implements Runnable, Serializable {
     public void slaveReport()
     {
         System.out.println("slave --> " + this + " ; status : " + status + "; completed:" + completedJobs.size() + " inprogress " + inProcessJobs.size());
+    }
+
+    public void shutdown()
+    {
+        //service.shutdown();
     }
 }
